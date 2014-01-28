@@ -1,0 +1,299 @@
+	<project name="${PROJECT_NAME} Pre-build tasks" default="load">
+	 
+		<!-- load previously defined configuration properties file -->
+		<property file="build.properties" />		
+		
+		<property name="project.svn.repository.url" value="http://subversion.amaze.com:8080/svn/lexus_v8_as3" />
+		<property name="library.project.path" value="trunk/code/AmazingBanner" />
+		<property name="application.class" value="src/com/amaze/lexus/amazingBanner/Application.as" />
+		<property name="library.src.path" value="src" />
+		<property name="library.lib.path" value="lib" />
+		<property name="pre-run-version-number" value="0" />
+		<property name="post-run-version-number" value="0" />
+		<property name="parsed-revision-number" value="0" />	
+		<property name="version-not-updated-message" value="" /> 
+		
+		<target name="load">
+			<echo>Amaze Ant Prebuild Tasks for project ${PROJECT_NAME}</echo>
+			<!-- locate the Eclipse installation to allow definition of classpaths to
+					- flexTasks jar file
+					- svnant jar files
+					- antform jar file
+				NB : depends on
+					- the build.properties flex.sdk.dir.name property to point at relevant sdk folder name
+					- svnant existing in the Flash Builder sdks folder
+					- antform existing in the Flash Builder sdks folder
+			 -->
+			<define-class-paths />
+			<!-- present gui to input svn username and password -->
+			<antform-define-build-workflow />
+			<!-- get the latest repository revision numbers for the src and lib folders -->
+			<get-revision-number />
+			<!-- check working copy data for the src and lib folders -->
+			<check-working-copy-version />
+			<!-- read in the application class file -->
+		    <loadfile property="sourceFile" srcFile="${application.class}"/>
+			<!-- update the VERSION property String in the application class -
+					Only perform the update if the following conditions are met :
+						1) Working copy src folder is not flagged as modified (either uncommitted changes or unversioned files)
+						2) Working copy lib folder is not flagged as modified (either uncommitted changes or unversioned files)
+						3) Working copy src folder revision number is not less than the repository src folder latest revision number
+							(allows rolling back of src folder to earlier version to be supported and compilable from Flash Builder)
+						4) Working copy lib folder revision number is not less than the repository lib folder latest revision number
+							(allows rolling back of lib folder to earlier version to be supported and compilable from Flash Builder)
+					
+					Flag set to determine whether any changes to the application file need committing
+			 -->
+			<update_version
+				str="${sourceFile}"
+				revision-number="${svn.src.info.rev}"
+				repository-src-last-revision-number="${repository-src-version}" repository-lib-last-revision-number="${repository-lib-version}"
+				working-copy-src-revision-number="${wc-src-version}" working-copy-lib-revision-number="${wc-lib-version}"
+				wc-src-modified="${wc-src-modified}" wc-lib-modified="${wc-lib-modified}"
+				pre-run-version-number="pre-run-version-number" post-run-version-number="post-run-version-number"
+				result="result" do-commit="do-commit" version-not-updated-message="version-not-updated-message"
+				parsed-version-number="parsed-version-number"
+			/>
+			<!-- echo out the VERSION property String in the application class before and after manipulation in update_version script -->
+			<echo message="version before running prebuild tasks : ${pre-run-version-number}" />
+			<echo message="version after running prebuild tasks : ${post-run-version-number}" />
+			<!-- Write the change back to the application class -->
+			<echo message="${result}" file="${application.class}"/>
+			<!-- commit application changes - will fail silently if commit not required -->
+			<property name="do-commit" value="${do-commit}" />
+			<svn-commit />
+			<!-- echo out whether we have committed changes or not -->
+			<echo message="file committed to svn : ${do-commit}" />
+			<echo message="${version-not-updated-message}" />
+		</target>
+		
+		<macrodef name="define-class-paths">
+			<sequential>
+				<!-- find the eclipse install location -->
+				<script language="javascript">
+					<![CDATA[
+
+					// Because ${eclipse.home} is not available, determine the install
+					// location using the pdebuild.scripts location
+
+					self.log("Looking for Eclipse installation...");
+					var base = project.getProperty("eclipse.pdebuild.scripts");
+					var path_pieces = base.split("/");
+					var path = "";
+					outterLoop: for(var i = path_pieces.length; i >= 0; --i)
+					{
+						if(path_pieces[i] == "Adobe Flash Builder 4" || path_pieces[i] == "Adobe Flex Builder 3")
+						{
+							// After determining which array item refers to the Adobe Flash Builder or Flex Builder
+							// installation, start at the beginning of the array and count up to that point, adding
+							// paths as you go.
+							var k = 0;
+							while( k <= i )
+							{
+								path += path_pieces[k] + "/";
+								++k;
+							}
+
+							break outterLoop;
+						}
+					}
+
+					// TODO: MAKE SURE THE PATH IS NOT EMPTY
+					self.log("Install path found at: " + path);
+
+					project.setProperty("install.location", path);
+
+					]]>
+
+				</script>
+				
+				<!-- points to our flexTasks.jar we copied to the libs folder to distribute with the project -->
+				<path id="flexTasks.jar.location" location="${install.location}/sdks/${flex.sdk.dir.name}/ant/lib/flexTasks.jar" />
+				<pathconvert targetos="windows" property="flexTasks.jar.agnostic" refid="flexTasks.jar.location" />
+				<pathconvert targetos="unix" property="flexTasks.jar.agnostic" refid="flexTasks.jar.location" />
+				<echo>converted path : flexTasks.jar.agnostic = ${flexTasks.jar.agnostic}</echo>
+				<taskdef resource="flexTasks.tasks" classpath="${flexTasks.jar.agnostic}"/>
+
+				<!-- points to our svnant jar files that exist on the local filesystem at the path defined in the build.properties ${svnant.lib.dir} property -->
+				<path id="project.classpath">
+					<pathelement location="${install.location}/${svnjavahl.jar}" />
+					<pathelement location="${install.location}/${svnant.jar}" />
+					<pathelement location="${install.location}/${svnClientAdapter.jar}" />
+				</path>
+				<taskdef resource="org/tigris/subversion/svnant/svnantlib.xml" classpathref="project.classpath"/>
+
+				<!-- points to our antform jar files that exist on the local filesystem at the path defined in the build.properties ${antform.lib.dir} property -->
+				<path id="antform.jar.location" location="${install.location}/sdks/antform/lib/antform.jar" />
+				<pathconvert targetos="windows" property="antform.jar.agnostic" refid="antform.jar.location" />
+				<pathconvert targetos="unix" property="antform.jar.agnostic" refid="antform.jar.location" />
+				<taskdef name="antform" classname="com.sardak.antform.AntForm" classpath="${antform.jar.agnostic}"/>
+				<echo>converted path : antform.jar.agnostic = ${antform.jar.agnostic}</echo>
+			</sequential>
+		</macrodef>
+		
+		<!-- = = = = = = = = = = = = = = = = =
+		  macrodef: antform-define-build-workflow          
+		 = = = = = = = = = = = = = = = = = -->
+		<macrodef name="antform-define-build-workflow">
+		    <sequential>
+		    	<antform title="Define What Tasks To Perform">
+					<label>SVN Username and Password required</label>
+		    		<textProperty label = "SVN username : " property="svn-username" />
+		    		<textProperty label = "SVN password : " property="svn-password" password="true" />
+		    	</antform>
+		    </sequential>
+		</macrodef>
+		
+		<macrodef name="get-revision-number">
+			<sequential>
+				<svnSetting
+					username="${svn.username}"
+					password="${svn.password}"
+				/>
+				<echo>Checking repository src folder latest revision</echo>
+				<svn>
+					<info target="${project.svn.repository.url}/${library.project.path}/${library.src.path}" propPrefix="svn.src.info"/>
+				</svn>
+				<echo>path : ${project.svn.repository.url}/${library.project.path}/${library.src.path}</echo>
+				<echo>last revision : ${svn.src.info.lastRev}</echo>
+				<property name="repository-src-version" value="${svn.src.info.lastRev}" />
+				
+				<echo>Checking repository lib folder latest revision</echo>
+				<svn>
+					<info target="${project.svn.repository.url}/${library.project.path}/${library.lib.path}" propPrefix="svn.lib.info"/>
+				</svn>
+				<echo>path : ${project.svn.repository.url}/${library.project.path}/${library.lib.path}</echo>
+				<echo>last revision : ${svn.lib.info.lastRev}</echo>
+				<property name="repository-lib-version" value="${svn.lib.info.lastRev}" />
+			</sequential>
+		</macrodef>
+		
+		<macrodef name="check-working-copy-version">
+			<sequential>
+				<svn>
+					<wcversion path="${basedir}/${library.src.path}" prefix="wc.src.version" processUnversioned="true" />
+				</svn>
+				<property name="wc-src-modified" value="${wc.src.version.modified}" />
+				<property name="wc-src-version" value="${wc.src.version.revision.max}" />
+				<echo>Checking src working copy revision number : ${wc-src-version}</echo>
+				<svn>
+					<wcversion path="${basedir}/${library.lib.path}" prefix="wc.lib.version" processUnversioned="true" />
+				</svn>
+				<property name="wc-lib-modified" value="${wc.lib.version.modified}" />
+				<property name="wc-lib-version" value="${wc.lib.version.revision.max}" />
+				<echo>Checking lib working copy revision number : ${wc-lib-version}</echo>
+				<log-out-wc-modified />
+			</sequential>
+		</macrodef>
+		
+		<macrodef name="log-out-wc-modified">
+			<sequential>
+			<script language="javascript">
+				<![CDATA[
+					var wc_src_modified = self.project.getProperty("wc-src-modified");
+					var wc_lib_modified = self.project.getProperty("wc-lib-modified");
+
+					if (wc_src_modified != "true")
+					{
+						self.log("your working copy src folder has modifications : false");
+					}
+					else
+					{
+						self.log("your working copy src folder has modifications : true");
+					}
+
+					if (wc_lib_modified != "true")
+					{
+						self.log("your working copy lib folder has modifications : false");
+					}
+					else
+					{
+						self.log("your working copy lib folder has modifications : true");
+					}
+				
+				]]>
+				
+			</script>
+			</sequential>
+		</macrodef>
+
+		<macrodef name="svn-commit">
+			<sequential>
+				<svn>
+					<commit	file="${application.class}"	
+						message="Auto commit ${application.class} : version = ${post-run-version-number}" />
+				</svn>
+			</sequential>
+		</macrodef>
+
+		<!-- script to strip out a version number from a string using a regex pattern
+		this is then set on the result attribute for later use -->
+		<scriptdef name="update_version" language="javascript">
+			<attribute name="str" />
+			<attribute name="repository-lib-last-revision-number" />
+			<attribute name="repository-src-last-revision-number" />
+			<attribute name="working-copy-src-revision-number" />
+			<attribute name="working-copy-lib-revision-number" />
+			<attribute name="wc-src-modified" /> 
+			<attribute name="wc-lib-modified" /> 
+			<attribute name="revision-number" />
+			<attribute name="result" /> 
+			<attribute name="do-commit" />
+			<attribute name="pre-run-version-number" /> 
+			<attribute name="post-run-version-number" />
+			<attribute name="version-not-updated-message" />
+			<attribute name="parsed-version-number" />
+			
+			<![CDATA[
+				var txt = attributes.get("str");
+				var revision = attributes.get("revision-number");
+				var repository_lib_revision_number = attributes.get("repository-lib-last-revision-number");
+				var repository_src_revision_number = attributes.get("repository-src-last-revision-number");
+				var working_copy_src_revision_number = attributes.get("working-copy-src-revision-number");
+				var working_copy_lib_revision_number = attributes.get("working-copy-lib-revision-number");
+				var wc_src_modified = attributes.get("wc-src-modified");
+				var wc_lib_modified = attributes.get("wc-lib-modified");
+				var patt = /VERSION:String = "([0-9]+\.[0-9]+\.[0-9]+\.r\.).+?"/;
+				var patt2 = /VERSION:String = "([0-9]+\.[0-9]+\.[0-9]+\.r\..+?)"/;
+				var result = patt.exec(txt);
+				var result2 = patt2.exec(txt);
+			
+				self.project.setProperty(attributes.get("pre-run-version-number"), result2[1]);
+			
+				var parsedRevisionNumber = Number(result2[1].substr(result2[1].lastIndexOf(".") + 1));
+				self.project.setProperty(attributes.get("parsed-version-number"), parsedRevisionNumber);
+				var r = Number(revision) + 1;
+				var inc_result = result[1] + r;
+			
+				var versionUpdate = (parsedRevisionNumber < repository_lib_revision_number || parsedRevisionNumber < repository_src_revision_number);
+				if (working_copy_src_revision_number < repository_src_revision_number
+					|| working_copy_lib_revision_number < repository_lib_revision_number
+					)
+				{
+					versionUpdate = false;
+					self.project.setProperty(attributes.get("version-not-updated-message")
+						, "Your working copy does not match the latest repository revision. No changes made to the application class VERSION property"
+					);
+				}
+				if (wc_src_modified == "true"
+					|| wc_lib_modified == "true"
+					)
+				{
+					versionUpdate = false;
+					self.project.setProperty(attributes.get("version-not-updated-message")
+						, "Your working copy contains modified files - Commit these before running this script. No changes made to the application class VERSION property"
+					);
+				}
+
+
+				var output = (!versionUpdate) ? txt : txt.replace(result2[1], inc_result);
+				result2 = patt2.exec(output);
+			
+				self.project.setProperty(attributes.get("do-commit"), versionUpdate);
+				self.project.setProperty(attributes.get("post-run-version-number"), result2[1]);
+				self.project.setProperty(attributes.get("result"), output);
+			]]>
+			
+		</scriptdef>
+		
+	</project>

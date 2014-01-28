@@ -1,0 +1,194 @@
+<project name="${PROJECT_NAME} Post-Build" default="load">
+
+	<!-- load previously defined configuration properties file -->
+	<property file="build.properties" />
+
+	<property name="application.class" value="src/com/amaze/lexus/amazingBanner/Application.as" />
+	
+	<target name="load">
+		<!-- locate the Eclipse installation to allow definition of classpaths to
+				- flexTasks jar file
+				- svnant jar files
+				- antform jar file
+			NB : depends on
+				- the build.properties flex.sdk.dir.name property to point at relevant sdk folder name
+				- svnant existing in the Flash Builder sdks folder
+				- antform existing in the Flash Builder sdks folder
+		 -->
+		<define-class-paths />
+		<!-- load the application class file -->
+	    <loadfile property="sourceFile" srcFile="${application.class}"/>
+		<!-- parse the application class file version number -->
+		<script_test str="${sourceFile}" result="result"/>
+		<echo message="Post build script complete: refresh bin folder to find implementation. version: ${result}" />
+		<!-- determine if we have exported a release build to the ${PROJECT_RELEASE_BIN_DIR} folder-->
+		<check-for-bin-release />
+		<!-- present gui and process result to update staging and/or create a zip archive of the bin-release folder-->
+		<antform-define-build-workflow />
+	</target>
+	
+	<macrodef name="define-class-paths">
+		<sequential>
+			<!-- find the eclipse install location -->
+			<script language="javascript">
+				<![CDATA[
+
+				// Because ${eclipse.home} is not available, determine the install
+				// location using the pdebuild.scripts location
+
+				self.log("Looking for Eclipse installation...");
+				var base = project.getProperty("eclipse.pdebuild.scripts");
+				var path_pieces = base.split("/");
+				var path = "";
+				outterLoop: for(var i = path_pieces.length; i >= 0; --i)
+				{
+					if(path_pieces[i] == "Adobe Flash Builder 4" || path_pieces[i] == "Adobe Flex Builder 3")
+					{
+						// After determining which array item refers to the Adobe Flash Builder or Flex Builder
+						// installation, start at the beginning of the array and count up to that point, adding
+						// paths as you go.
+						var k = 0;
+						while( k <= i )
+						{
+							path += path_pieces[k] + "/";
+							++k;
+						}
+
+						break outterLoop;
+					}
+				}
+
+				// TODO: MAKE SURE THE PATH IS NOT EMPTY
+				self.log("Install path found at: " + path);
+
+				project.setProperty("install.location", path);
+
+				]]>
+
+			</script>
+			
+			<!-- points to our flexTasks.jar we copied to the libs folder to distribute with the project -->
+			<path id="flexTasks.jar.location" location="${install.location}/sdks/${flex.sdk.dir.name}/ant/lib/flexTasks.jar" />
+			<pathconvert targetos="windows" property="flexTasks.jar.agnostic" refid="flexTasks.jar.location" />
+			<pathconvert targetos="unix" property="flexTasks.jar.agnostic" refid="flexTasks.jar.location" />
+			<echo>converted path : flexTasks.jar.agnostic = ${flexTasks.jar.agnostic}</echo>
+			<taskdef resource="flexTasks.tasks" classpath="${flexTasks.jar.agnostic}"/>
+
+			<!-- points to our svnant jar files that exist on the local filesystem at the path defined in the build.properties ${svnant.lib.dir} property -->
+			<path id="project.classpath">
+				<pathelement location="${install.location}/${svnjavahl.jar}" />
+				<pathelement location="${install.location}/${svnant.jar}" />
+				<pathelement location="${install.location}/${svnClientAdapter.jar}" />
+			</path>
+			<taskdef resource="org/tigris/subversion/svnant/svnantlib.xml" classpathref="project.classpath"/>
+
+			<!-- points to our antform jar files that exist on the local filesystem at the path defined in the build.properties ${antform.lib.dir} property -->
+			<path id="antform.jar.location" location="${install.location}/sdks/antform/lib/antform.jar" />
+			<pathconvert targetos="windows" property="antform.jar.agnostic" refid="antform.jar.location" />
+			<pathconvert targetos="unix" property="antform.jar.agnostic" refid="antform.jar.location" />
+			<taskdef name="antform" classname="com.sardak.antform.AntForm" classpath="${antform.jar.agnostic}"/>
+			<echo>converted path : antform.jar.agnostic = ${antform.jar.agnostic}</echo>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="check-for-bin-release">
+		<sequential>
+			<condition property="release-dir-exists">
+				<available file="${PROJECT_RELEASE_BIN_DIR}" type="dir" />
+			</condition>
+			<antcall target="echo-release-dir-absent" />
+		</sequential>
+	</macrodef>
+	
+	<target name="echo-release-dir-absent" unless="release-dir-exists">
+		<echo>To enable updating staging and/or creating a build .zip archive you must first use Flash Builder to export a release build</echo>
+	</target>
+
+	<macrodef name="antform-define-build-workflow">
+		<sequential>
+			<antcall target="display-antform" />
+		</sequential>
+	</macrodef>
+	
+	<target name="display-antform" if="release-dir-exists">
+		<sequential>
+	    	<antform title="Amaze ${PROJECT_NAME} PostBuild Tasks">
+				<label>Select ${PROJECT_NAME} PostBuild Tasks To Perform</label>
+	    		<booleanProperty label = "Update Staging : " property="ant-form-update-staging" />
+	    		<fileSelectionProperty label = "Select directory to update : " property="staging-filepath" directoryChooser="true" />
+	    		<booleanProperty label = "Create .zip archive : " property="ant-form-create-zip-archive" />
+	    		<fileSelectionProperty label = "Select directory for .zip : " property="archive-filepath" directoryChooser="true" />
+	    		<controlBar>
+	    			<button label="Reset" type="reset" />
+	    			<button label="Cancel" type="cancel" />
+					<button label="OK" type="ok" target="antform-set-properties" />
+	    		</controlBar>
+	    	</antform>
+		</sequential>
+	</target>
+	
+	<target name="antform-set-properties">
+		<condition property="update-staging">
+			<equals arg1="${ant-form-update-staging}" arg2="true" />
+		</condition>
+		<condition property="update-staging-path-set">
+			<and>
+				<equals arg1="${update-staging}" arg2="true" />
+				<not>
+					<equals arg1="${staging-filepath}" arg2="" />
+				</not>
+			</and>
+		</condition>
+		<condition property="create-zip-archive">
+			<equals arg1="${ant-form-create-zip-archive}" arg2="true" />
+		</condition>
+		<condition property="zip-archive-filepath-set">
+			<and>
+				<equals arg1="${create-zip-archive}" arg2="true" />
+				<not>
+					<equals arg1="${archive-filepath}" arg2="" />
+				</not>
+			</and>
+		</condition>
+		<echo>update-staging = ${update-staging} : create-zip-archive = ${create-zip-archive}</echo>
+		<echo>staging-filepath = ${staging-filepath} : archive-filepath = ${archive-filepath}</echo>
+		<echo>update-staging-path-set = ${update-staging-path-set} : zip-archive-filepath-set = ${zip-archive-filepath-set}</echo>
+		<antcall target="do-update-staging" />
+		<antcall target="do-zip-release" />
+	</target>
+
+	<target name="do-update-staging" if="release-dir-exists" >
+		<antcall target="finalise-update-staging" />
+    </target>
+	
+	<target name="finalise-update-staging" if="update-staging-path-set">
+        <echo>Updating staging for ${PROJECT_NAME}...</echo>
+        <copy todir="${staging-filepath}" overwrite="true">
+  			 <fileset dir="${PROJECT_RELEASE_BIN_DIR}" />
+  		</copy>
+	</target>
+
+	<target name="do-zip-release" if="release-dir-exists">
+		<antcall target="finalise-zip-release" />
+	</target>
+			
+	<target name="finalise-zip-release" if="zip-archive-filepath-set">
+        <echo>Zipping project ${PROJECT_NAME} to ${PROJECT_NAME}_${result}.zip...</echo>
+		<zip destfile="${archive-filepath}/${PROJECT_NAME}_${result}.zip" basedir="${PROJECT_RELEASE_BIN_DIR}" />
+	</target>
+
+	<scriptdef name="script_test" language="javascript">
+	    <attribute name="str" />
+	    <attribute name="result" />  
+
+	    <![CDATA[
+		  var txt = attributes.get("str");
+		  var patt = /VERSION:String = "(.*?)"/;
+		  var result = patt.exec(txt);
+		
+		 self.project.setProperty(attributes.get("result"), result[1]);
+	    ]]>
+		
+	</scriptdef>
+	
+</project>

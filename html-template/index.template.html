@@ -1,0 +1,173 @@
+<!doctype html>
+<!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js" lang="en">
+
+<!-- 
+Smart developers always View Source. .
+
+This application was built using Adobe Flex, an open source framework
+for building rich Internet applications that get delivered via the
+Flash Player or to desktops via Adobe AIR. 
+
+Learn more about Flex at http://flex.org 
+// -->
+
+	<head>
+            <meta charset="utf-8">
+            <title></title>
+            <style>
+            	body { padding: 20px; }
+            	h1 { margin: 0 0 20px; }
+            	#questions > div { width: 400px; border: 1px solid gray; padding: 10px; margin-bottom: 10px; }
+            	label { display: block; }
+            	.gender, .age { display: inline-block; }
+            	button { margin-top: 20px; }
+            	#complete { border: 0 !important; }
+            	#complete > button { font-size: 2em; }
+            </style>
+	</head>
+	<body>
+	
+		<div id="questions">
+			<div id="surface">
+				<h1>1. Primary surface</h1>
+				<label><input type="radio" name="surface" value="track" /> Track</label> 
+				<label><input type="radio" name="surface" value="trail" /> Trail</label> 
+				<label><input type="radio" name="surface" value="road" /> Road</label> 
+				<label><input type="radio" name="surface" value="treadmill" /> Treadmill</label> 
+				<label><input type="radio" name="surface" value="mixed" /> Mixed</label> 
+				<button>Submit</button>
+			</div>
+			<div id="experience">
+				<h1>2. Experience</h1>
+				<label><input type="radio" name="experience" value="newbie" /> Once a month</label> 
+				<label><input type="radio" name="experience" value="beginner" /> Once a week</label> 
+				<label><input type="radio" name="experience" value="intermediate" /> Twice a week</label> 
+				<label><input type="radio" name="experience" value="expert" /> More than twice a week</label> 
+				<button>Submit</button>
+			</div>
+			<div id="objectives">
+				<h1>3. Objectives</h1>
+				<label><input type="radio" name="objectives" value="speed" /> I want to run faster and improve my endurance</label> 
+				<label><input type="radio" name="objectives" value="competition" /> I want to attend a reace in the near future</label> 
+				<label><input type="radio" name="objectives" value="efficiency" /> I want to train smarter and use time more effectively</label> 
+				<label><input type="radio" name="objectives" value="stamina" /> I want to run a longer distance than I usually do</label> 
+				<label><input type="radio" name="objectives" value="fitness" /> I want to stay in shape with regular fitness training</label> 
+				<button>Submit</button>
+			</div>
+			<div id="about">
+				<h1>4. About you</h1>
+				<label class="gender"><input type="radio" name="gender" value="male" /> Male</label> 
+				<label class="gender"><input type="radio" name="gender" value="female" checked /> Female</label> 
+				<hr />
+				<label class="age"><input type="radio" name="age" value="24" /> 18 - 24</label> 
+				<label class="age"><input type="radio" name="age" value="34" /> 25 - 34</label> 
+				<label class="age"><input type="radio" name="age" value="44" checked /> 35 - 44</label> 
+				<label class="age"><input type="radio" name="age" value="54" /> 45 - 54</label> 
+				<label class="age"><input type="radio" name="age" value="74" /> 64 +</label> 
+				<hr />
+				<label><input type="text" name="height" value="180" /> Height (CM)</label> 
+				<label><input type="text" name="weight" value="82" /> Weight (KG)</label> 
+				<button>Submit</button>
+			</div>	
+			<div id="pronation">
+				<h1>5. Pronation</h1>
+				<label><input type="radio" name="pronation" value="under pronate" /> Under</label> 
+				<label><input type="radio" name="pronation" value="neutral" /> Neutral</label> 
+				<label><input type="radio" name="pronation" value="over pronate" /> Over</label> 
+				<label><input type="radio" name="pronation" value="severe over pronate" /> Severe</label> 
+				<!-- Severe specified as an option, but not given a profile in documentation -->
+				<label><input type="radio" name="pronation" value="dunno" /> Don't know</label> 
+				<button>Submit</button>
+			</div>	
+			<div id="time">
+				<h1>6. Time of day</h1>
+				<label><input type="radio" name="time" value="morning" /> Morning</label> 
+				<label><input type="radio" name="time" value="day" /> Day</label> 
+				<label><input type="radio" name="time" value="evening" /> Evening</label> 
+				<button>Submit</button>
+			</div>	
+			<div id="weather">
+				<h1>7. Weather</h1>
+				<label><input type="radio" name="weather" value="cloud" /> Cloud</label> 
+				<label><input type="radio" name="weather" value="rain" /> Rain</label> 
+				<label><input type="radio" name="weather" value="hot" /> Hot</label> 
+				<label><input type="radio" name="weather" value="wind" /> Wind</label> 
+				<button>Submit</button>
+			</div>	
+			<div id="complete">
+				<button>FINISHED</button>
+			</div>	
+		</div>
+
+		<!-- he's doing all the hardwork -->			
+		<div id="flashContent"></div>			
+
+		<script src="js/libs/jquery-1.7.1.min.js"></script>				
+		<script src="js/libs/underscore.js"></script>				
+        <script src="js/libs/swfobject.js"></script> 
+		<script src="js/external_interface.js"></script>	
+				       
+        <script>    
+			swfobject.embedSWF("${swf}.swf", "flashContent", "1", "1", "9.0.0", null, {}, { allowscriptaccess: "always" }, {});
+
+
+/*
+			var responses = [
+				{ type: 'surface', value: 'track' },
+				{ type: 'experience', value: 'newbie' }, 
+				{ type: 'objectives', value: 'speed' }, 
+				{ type: 'about', value: { 
+					gender: 'female',
+					height: '180', // cm. This can't be a range if we need to calculate BMI
+					age: '74', // Could be a range, but easier if we receive upper limit. Used ranges in flow chart
+					weight: '82' // This can't be a range if we need to calculate BMI
+				}
+				},
+				{ type: 'pronation', value: 'neutral' },
+				{ type: 'time', value: 'morning' },
+				{ type: 'weather', value: 'wind' },
+				// email response question not defined / doesn't make sense / Jimi hasn't heard of it
+				{ type: 'complete', value: '' }
+			];
+*/
+
+// You can send the above in one go from the console by calling flashInterface(responses);
+
+			var responses = [];
+
+			$('#questions > div').on('click', function(e) {
+				
+				var $this = $(this),
+					$target = $(e.target),
+					$selected = $this.find('input:checked')
+
+				var id = $this.attr('id'), response;
+
+				if ($target.is('button')) {
+
+					if (id !== 'about') {
+						response = { type: id, value: $selected.val() };
+					} else {
+						response = { type: id, value: {
+							gender: $this.find('.gender input:checked').val(),
+							age: $this.find('.age input:checked').val(),
+							height: $this.find('input[name=height]').val(),
+							weight: $this.find('input[name=weight]').val()
+						}};
+					}
+
+					// remove the item if it's already on there
+					responses = _.without(responses, _.findWhere(responses, {type: id}));
+					responses.push(response);
+
+					flashInterface(responses);
+				}
+			});
+
+		</script>
+	</body>
+</html>

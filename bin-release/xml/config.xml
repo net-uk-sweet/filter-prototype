@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<startup>
+		<proxy type="asynch" classPath="com.amaze.filter.model.ApplicationDataProxy" source="xml/content.xml" />
+		<proxy type="asynch" classPath="com.amaze.filter.model.ProductDataProxy" source="xml/products.xml" />
+</startup>

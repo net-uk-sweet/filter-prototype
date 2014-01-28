@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<content>
+	<!-- global settings, eg. paths to resources, language etc. -->
+	<settings>
+		<setting id="settings-test">settings works!</setting> 
+	</settings>
+	<!-- any global labels -->
+	<dictionary>
+		<term id="dictionary-test">dictionary works!</term>		
+	</dictionary>
+	<view>
+		<!-- view specific data here -->
+	</view>
+</content>
