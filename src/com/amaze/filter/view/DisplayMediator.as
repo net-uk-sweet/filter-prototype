@@ -107,7 +107,7 @@ package com.amaze.filter.view
 				
 				this.log("------------------------------------");
 				this.log("User's profile:");
-				this.log(filterVO.userProfile);			
+				this.table(filterVO.userProfile);			
 			}
 			
 			this.log("------------------------------------");
@@ -127,6 +127,14 @@ package com.amaze.filter.view
 			if (ExternalInterface.available) 
 			{
 				ExternalInterface.call("console.log", value);
+			}
+		}
+		
+		private function table(value:*):void
+		{
+			if (ExternalInterface.available)
+			{
+				ExternalInterface.call("console.table", value);
 			}
 		}
 		

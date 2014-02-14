@@ -20,12 +20,12 @@ Learn more about Flex at http://flex.org
             <title></title>
             <style>
             	body { padding: 20px; }
-            	h1 { margin: 0 0 20px; }
+            	h1 { margin: 0; }
+            	small { display: block; margin: 10px 0 10px; }
             	#questions > div { width: 400px; border: 1px solid gray; padding: 10px; margin-bottom: 10px; }
             	label { display: block; }
             	.gender, .age { display: inline-block; }
             	button { margin-top: 20px; }
-            	#complete { border: 0 !important; }
             	#complete > button { font-size: 2em; }
             </style>
 	</head>
@@ -34,6 +34,7 @@ Learn more about Flex at http://flex.org
 		<div id="questions">
 			<div id="surface">
 				<h1>1. Primary surface</h1>
+				<small>Doesn't affect data until final calculation</small>
 				<label><input type="radio" name="surface" value="track" /> Track</label> 
 				<label><input type="radio" name="surface" value="trail" /> Trail</label> 
 				<label><input type="radio" name="surface" value="road" /> Road</label> 
@@ -43,6 +44,7 @@ Learn more about Flex at http://flex.org
 			</div>
 			<div id="experience">
 				<h1>2. Experience</h1>
+			    <small>Doesn't affect data until final calculation</small>
 				<label><input type="radio" name="experience" value="newbie" /> Once a month</label> 
 				<label><input type="radio" name="experience" value="beginner" /> Once a week</label> 
 				<label><input type="radio" name="experience" value="intermediate" /> Twice a week</label> 
@@ -51,6 +53,7 @@ Learn more about Flex at http://flex.org
 			</div>
 			<div id="objectives">
 				<h1>3. Objectives</h1>
+			    <small>Doesn't affect data at all</small>
 				<label><input type="radio" name="objectives" value="speed" /> I want to run faster and improve my endurance</label> 
 				<label><input type="radio" name="objectives" value="competition" /> I want to attend a reace in the near future</label> 
 				<label><input type="radio" name="objectives" value="efficiency" /> I want to train smarter and use time more effectively</label> 
@@ -60,6 +63,7 @@ Learn more about Flex at http://flex.org
 			</div>
 			<div id="about">
 				<h1>4. About you</h1>
+				<small>Filters data according to gender. Also used to calculate BMI which is used in final calculation</small>
 				<label class="gender"><input type="radio" name="gender" value="male" /> Male</label> 
 				<label class="gender"><input type="radio" name="gender" value="female" checked /> Female</label> 
 				<hr />
@@ -75,6 +79,7 @@ Learn more about Flex at http://flex.org
 			</div>	
 			<div id="pronation">
 				<h1>5. Pronation</h1>
+				<small>Filters data according to pronation. Also used in final calculation.</small>
 				<label><input type="radio" name="pronation" value="under pronate" /> Under</label> 
 				<label><input type="radio" name="pronation" value="neutral" /> Neutral</label> 
 				<label><input type="radio" name="pronation" value="over pronate" /> Over</label> 
@@ -85,6 +90,7 @@ Learn more about Flex at http://flex.org
 			</div>	
 			<div id="time">
 				<h1>6. Time of day</h1>
+			    <small>Doesn't affect data</small>
 				<label><input type="radio" name="time" value="morning" /> Morning</label> 
 				<label><input type="radio" name="time" value="day" /> Day</label> 
 				<label><input type="radio" name="time" value="evening" /> Evening</label> 
@@ -92,6 +98,7 @@ Learn more about Flex at http://flex.org
 			</div>	
 			<div id="weather">
 				<h1>7. Weather</h1>
+			    <small>Doesn't affect data</small>
 				<label><input type="radio" name="weather" value="cloud" /> Cloud</label> 
 				<label><input type="radio" name="weather" value="rain" /> Rain</label> 
 				<label><input type="radio" name="weather" value="hot" /> Hot</label> 
@@ -99,6 +106,7 @@ Learn more about Flex at http://flex.org
 				<button>Submit</button>
 			</div>	
 			<div id="complete">
+			    <small>Final calculation compares user profile against product passport to calculate a suitability score. Lower is better.</small>
 				<button>FINISHED</button>
 			</div>	
 		</div>
