@@ -3,8 +3,6 @@ package com.amaze.filter.model.filters
 	import com.alanmacdougall.underscore._;
 	import com.amaze.filter.model.vo.FilterVO;
 	
-	import org.as3commons.logging.LoggerFactory;
-	
 	public class AboutFilter implements IFilter
 	{
 		// Is BMI calculated the same way across the world?
@@ -45,9 +43,8 @@ package com.amaze.filter.model.filters
 				return product.gender == gender; 
 			});
 
-			// These one's are just for debugging the prototype
-			filterVO.bmi = bmi;
-			filterVO.weight = weightCategory;
+			filterVO.bmi = bmi; // This won't be used, but it's handy to see for debugging
+			filterVO.weight = weightCategory; // Product matching is based on descriptive value not actual BMI score
 			
 			return filterVO; 
 		}

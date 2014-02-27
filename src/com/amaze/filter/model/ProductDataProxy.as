@@ -124,6 +124,7 @@ package com.amaze.filter.model
 				
 				// Q.3
 				case "objectives": 
+				// Currently we do nothing with objectives at all
 				filter = new NullFilter();
 				break;
 				

@@ -1,13 +1,23 @@
 package com.amaze.filter.model.filters
 {
-	import com.alanmacdougall.underscore._;
 	import com.amaze.filter.model.vo.FilterVO;
-	import com.amaze.model.vo.AbstractVO;
 	
 	public class SurfaceFilter implements IFilter
 	{
 		public function apply(filterVO:FilterVO, response:Object):FilterVO
 		{
+			/*
+				Translated below (with other questions, the translation is done client-side) :-
+			
+				From: 		To:
+			
+				Trail 		- off
+				Track 		- urban
+				Road 		- urban
+				Treadmill	- urban
+				Mixed		- urban
+			*/
+			
 			var surface:String = (response.toString() == "trail") ? "off" : "urban";
 			filterVO.addResponse("grip", surface);		
 			

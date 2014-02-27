@@ -4,8 +4,6 @@ package com.amaze.filter.model.filters
 	import com.amaze.filter.model.vo.FilterVO;
 	import com.amaze.filter.model.vo.ProductVO;
 	
-	import org.as3commons.logging.LoggerFactory;
-	
 	public class CompleteFilter implements IFilter
 	{
 		// If these are likely to change, may be worth loading them as an external JSON
@@ -124,7 +122,7 @@ package com.amaze.filter.model.filters
 			filterVO.complete = true;		
 			
 			filterVO.products = filterProducts(filterVO);
-			filterVO.products.sortOn("suitability");
+			filterVO.products.sortOn("suitability", Array.NUMERIC);
 
 			return filterVO;
 		}
@@ -138,21 +136,21 @@ package com.amaze.filter.model.filters
 			
 			return _.map(filterVO.products, function(product:ProductVO):ProductVO {
 				
-				var diff:Number;
-				var totalDiff:Number = 0;
+				var diff:Number = 0;
+				var passportScore:Number;
 				
 				for (var prop:String in userProfile) {
 					
-					// For shoes w/ no passport, use a score of 0
-					diff = product.passport[prop] || 0;
-					diff = Math.abs(diff - userProfile[prop]);
-					
-					totalDiff += diff;
+					// For shoes w/ no passport, use a score of 0 for each property
+					passportScore = product.passport[prop] || 0;
+					diff += Math.abs(passportScore - userProfile[prop]);
 				}
 				
 				// Lower score indicates a better match as there is less variance
-				// between user profile and shoe's passport
-				product.suitability = totalDiff;
+				// between user profile and shoe's passport.
+				// It's pretty crude however as the variance could be large on one 
+				// particular property but overall variance still low. 
+				product.suitability = diff;
 				
 				return product;
 			});
