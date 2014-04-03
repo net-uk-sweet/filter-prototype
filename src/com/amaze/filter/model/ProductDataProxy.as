@@ -78,7 +78,8 @@ package com.amaze.filter.model
 			
 			for each(var attribute:XML in attributes.ASICS::PassportAttribute)
 			{
-				obj[attribute.@type] = parseFloat(attribute.@value.toString());	
+				// Some feeds we've received have the attributes in uppercase
+				obj[attribute.@type.toString().toLowerCase()] = parseFloat(attribute.@value.toString());	
 			}
 			
 			// Currently some of the products don't have a passport

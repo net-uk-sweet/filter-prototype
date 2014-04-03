@@ -107,7 +107,7 @@ package com.amaze.filter.view
 				
 				this.log("------------------------------------");
 				this.log("User's profile:");
-				this.table(filterVO.userProfile);			
+				this.log(filterVO.userProfile);			
 			}
 			
 			this.log("------------------------------------");
